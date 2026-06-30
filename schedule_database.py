@@ -17,15 +17,13 @@ class ScheduleDatabase:
     def __init__(self, db_path: str = 'database/schedule_history.db'):
         self.db_path = db_path
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        self.conn = None
         self._init_database()
 
     def _get_connection(self) -> sqlite3.Connection:
-        """获取数据库连接"""
-        if self.conn is None:
-            self.conn = sqlite3.connect(self.db_path)
-            self.conn.row_factory = sqlite3.Row
-        return self.conn
+        """获取数据库连接（每次调用创建新连接，避免线程安全问题）"""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
 
     def _init_database(self):
         """初始化数据库表结构"""
@@ -134,7 +132,9 @@ class ScheduleDatabase:
             (batch_id, json.dumps(config, ensure_ascii=False))
         )
         conn.commit()
-        return cursor.lastrowid
+        last_id = cursor.lastrowid
+        conn.close()
+        return last_id
 
     def save_tasks_config(self, batch_id: str, config: Dict) -> int:
         """保存任务配置"""
@@ -145,7 +145,9 @@ class ScheduleDatabase:
             (batch_id, json.dumps(config, ensure_ascii=False))
         )
         conn.commit()
-        return cursor.lastrowid
+        last_id = cursor.lastrowid
+        conn.close()
+        return last_id
 
     def save_locomotives_config(self, batch_id: str, config: Dict) -> int:
         """保存机车配置"""
@@ -156,7 +158,9 @@ class ScheduleDatabase:
             (batch_id, json.dumps(config, ensure_ascii=False))
         )
         conn.commit()
-        return cursor.lastrowid
+        last_id = cursor.lastrowid
+        conn.close()
+        return last_id
 
     def save_hyper_params(self, batch_id: str, config: Dict) -> int:
         """保存超参数配置"""
@@ -167,7 +171,9 @@ class ScheduleDatabase:
             (batch_id, json.dumps(config, ensure_ascii=False))
         )
         conn.commit()
-        return cursor.lastrowid
+        last_id = cursor.lastrowid
+        conn.close()
+        return last_id
 
     # ==================== 调度结果 ====================
 
@@ -184,7 +190,9 @@ class ScheduleDatabase:
              json.dumps(result, ensure_ascii=False))
         )
         conn.commit()
-        return cursor.lastrowid
+        last_id = cursor.lastrowid
+        conn.close()
+        return last_id
 
     def get_schedule_results(self, batch_id: str = None, strategy_name: str = None,
                              page: int = 1, page_size: int = 20) -> Tuple[List[Dict], int]:
@@ -228,6 +236,7 @@ class ScheduleDatabase:
                 'created_at': row['created_at']
             })
 
+        conn.close()
         return results, total
 
     # ==================== 日志记录 ====================
@@ -245,6 +254,7 @@ class ScheduleDatabase:
              json.dumps(details, ensure_ascii=False) if details else None)
         )
         conn.commit()
+        conn.close()
 
     def get_logs(self, batch_id: str = None, log_type: str = None,
                  log_level: str = None, page: int = 1, page_size: int = 20) -> Tuple[List[Dict], int]:
@@ -288,6 +298,7 @@ class ScheduleDatabase:
                 'created_at': row['created_at']
             })
 
+        conn.close()
         return logs, total
 
     # ==================== 策略对比 ====================
@@ -305,7 +316,9 @@ class ScheduleDatabase:
              json.dumps(comparison, ensure_ascii=False))
         )
         conn.commit()
-        return cursor.lastrowid
+        last_id = cursor.lastrowid
+        conn.close()
+        return last_id
 
     def get_comparison_reports(self, batch_id: str = None,
                                page: int = 1, page_size: int = 20) -> Tuple[List[Dict], int]:
@@ -341,6 +354,7 @@ class ScheduleDatabase:
                 'created_at': row['created_at']
             })
 
+        conn.close()
         return reports, total
 
     # ==================== 统计信息 ====================
@@ -386,6 +400,7 @@ class ScheduleDatabase:
                 'best_count': row[1]
             })
 
+        conn.close()
         return stats
 
     # ==================== 导出功能 ====================
@@ -408,6 +423,7 @@ class ScheduleDatabase:
 
         rows = cursor.fetchall()
         data = [dict(row) for row in rows]
+        conn.close()
         return json.dumps(data, ensure_ascii=False, indent=2, default=str)
 
     def export_to_csv(self, table_name: str, batch_id: str = None) -> str:
@@ -430,6 +446,8 @@ class ScheduleDatabase:
             cursor.execute(f'SELECT * FROM {table_name}')
 
         rows = cursor.fetchall()
+        conn.close()
+
         if not rows:
             return ""
 
@@ -444,10 +462,8 @@ class ScheduleDatabase:
         return output.getvalue()
 
     def close(self):
-        """关闭数据库连接"""
-        if self.conn:
-            self.conn.close()
-            self.conn = None
+        """关闭数据库连接（现在每次操作自动关闭，此方法保留兼容）"""
+        pass
 
 
 if __name__ == '__main__':
