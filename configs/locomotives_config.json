@@ -1,0 +1,66 @@
+{
+    "locomotives_id": "locos_001",
+    "description": "示例机车配置",
+    "locomotives": [
+        {
+            "loco_id": "EL001",
+            "traction_type": "electric",
+            "Q": 100,
+            "max_speed": 300,
+            "initial_node": "S1",
+            "is_powered_on": true,
+            "is_schedulable": true,
+            "task_phase": null,
+            "current_task": null,
+            "battery": 80.5
+        },
+        {
+            "loco_id": "EL002",
+            "traction_type": "electric",
+            "Q": 80,
+            "max_speed": 250,
+            "initial_node": "S2",
+            "is_powered_on": true,
+            "is_schedulable": true,
+            "task_phase": null,
+            "current_task": null,
+            "battery": 65.0
+        },
+        {
+            "loco_id": "DL001",
+            "traction_type": "diesel",
+            "Q": 120,
+            "max_speed": 200,
+            "initial_node": "S3",
+            "is_powered_on": true,
+            "is_schedulable": true,
+            "task_phase": null,
+            "current_task": null,
+            "fuel_tank": 150.0
+        },
+        {
+            "loco_id": "EL003",
+            "traction_type": "electric",
+            "Q": 60,
+            "max_speed": 350,
+            "initial_node": "E1",
+            "is_powered_on": true,
+            "is_schedulable": false,
+            "task_phase": "loading",
+            "current_task": "T001",
+            "battery": 45.0
+        },
+        {
+            "loco_id": "DL002",
+            "traction_type": "diesel",
+            "Q": 100,
+            "max_speed": 180,
+            "initial_node": "M1",
+            "is_powered_on": false,
+            "is_schedulable": false,
+            "task_phase": null,
+            "current_task": null,
+            "fuel_tank": 30.0
+        }
+    ]
+}

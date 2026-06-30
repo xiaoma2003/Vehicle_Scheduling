@@ -1,0 +1,76 @@
+{
+    "tasks_id": "tasks_001",
+    "description": "示例任务配置",
+    "tasks": [
+        {
+            "task_id": "T001",
+            "start_node": "M1",
+            "end_node": "S1",
+            "load_weight": 50,
+            "priority": 50,
+            "task_type": "normal",
+            "status": "running",
+            "material_tag": "钢材",
+            "depends_on": [],
+            "time_window_start": null,
+            "time_window_end": null,
+            "created_time": "2024-01-01T08:00:00"
+        },
+        {
+            "task_id": "T002",
+            "start_node": "M2",
+            "end_node": "S3",
+            "load_weight": 30,
+            "priority": 30,
+            "task_type": "normal",
+            "status": "running",
+            "material_tag": "煤炭",
+            "depends_on": [],
+            "time_window_start": null,
+            "time_window_end": null,
+            "created_time": "2024-01-01T08:15:00"
+        },
+        {
+            "task_id": "T003",
+            "start_node": "S1",
+            "end_node": "M1",
+            "load_weight": 20,
+            "priority": 70,
+            "task_type": "normal",
+            "status": "running",
+            "material_tag": "空载",
+            "depends_on": ["T001"],
+            "time_window_start": null,
+            "time_window_end": null,
+            "created_time": "2024-01-01T08:30:00"
+        },
+        {
+            "task_id": "T004",
+            "start_node": "S2",
+            "end_node": "M2",
+            "load_weight": 40,
+            "priority": 40,
+            "task_type": "temporary",
+            "status": "running",
+            "material_tag": "设备",
+            "depends_on": [],
+            "time_window_start": 60,
+            "time_window_end": 180,
+            "created_time": "2024-01-01T09:00:00"
+        },
+        {
+            "task_id": "T005",
+            "start_node": "E1",
+            "end_node": "S2",
+            "load_weight": 15,
+            "priority": 60,
+            "task_type": "normal",
+            "status": "running",
+            "material_tag": "配件",
+            "depends_on": [],
+            "time_window_start": null,
+            "time_window_end": null,
+            "created_time": "2024-01-01T09:15:00"
+        }
+    ]
+}

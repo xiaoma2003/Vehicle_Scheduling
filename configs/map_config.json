@@ -1,0 +1,161 @@
+{
+    "map_id": "factory_map_001",
+    "map_name": "工厂区域地图",
+    "description": "示例工厂区域地图，包含车站、能源补给站、物料站和道岔",
+    "nodes": [
+        {
+            "node_id": "S1",
+            "node_type": "station",
+            "node_name": "主车站",
+            "x": 0,
+            "y": 0,
+            "connections": ["S2", "M1"]
+        },
+        {
+            "node_id": "S2",
+            "node_type": "station",
+            "node_name": "副车站",
+            "x": 500,
+            "y": 0,
+            "connections": ["S1", "S3"]
+        },
+        {
+            "node_id": "S3",
+            "node_type": "station",
+            "node_name": "东车站",
+            "x": 1000,
+            "y": 0,
+            "connections": ["S2", "M2"]
+        },
+        {
+            "node_id": "E1",
+            "node_type": "energy_station",
+            "node_name": "充电站1",
+            "x": 250,
+            "y": 300,
+            "connections": ["S1", "M1"]
+        },
+        {
+            "node_id": "E2",
+            "node_type": "energy_station",
+            "node_name": "加油站",
+            "x": 750,
+            "y": 300,
+            "connections": ["S2", "M2"]
+        },
+        {
+            "node_id": "M1",
+            "node_type": "material_station",
+            "node_name": "物料站A",
+            "x": 250,
+            "y": -300,
+            "connections": ["S1", "E1"]
+        },
+        {
+            "node_id": "M2",
+            "node_type": "material_station",
+            "node_name": "物料站B",
+            "x": 1000,
+            "y": -300,
+            "connections": ["S3", "E2"]
+        },
+        {
+            "node_id": "SW1",
+            "node_type": "switch",
+            "node_name": "道岔1",
+            "x": 500,
+            "y": -150,
+            "connections": ["S2", "M1", "M2"]
+        }
+    ],
+    "edges": [
+        {
+            "from_node": "S1",
+            "to_node": "S2",
+            "distance": 500,
+            "speed_limit": 200,
+            "gradient": 0,
+            "bidirectional": true
+        },
+        {
+            "from_node": "S2",
+            "to_node": "S3",
+            "distance": 500,
+            "speed_limit": 200,
+            "gradient": 0,
+            "bidirectional": true
+        },
+        {
+            "from_node": "S1",
+            "to_node": "M1",
+            "distance": 400,
+            "speed_limit": 150,
+            "gradient": -0.05,
+            "bidirectional": true
+        },
+        {
+            "from_node": "S1",
+            "to_node": "E1",
+            "distance": 350,
+            "speed_limit": 150,
+            "gradient": 0.03,
+            "bidirectional": true
+        },
+        {
+            "from_node": "S2",
+            "to_node": "E2",
+            "distance": 350,
+            "speed_limit": 150,
+            "gradient": 0.02,
+            "bidirectional": true
+        },
+        {
+            "from_node": "S3",
+            "to_node": "M2",
+            "distance": 400,
+            "speed_limit": 150,
+            "gradient": -0.03,
+            "bidirectional": true
+        },
+        {
+            "from_node": "S2",
+            "to_node": "SW1",
+            "distance": 200,
+            "speed_limit": 100,
+            "gradient": 0,
+            "bidirectional": true
+        },
+        {
+            "from_node": "SW1",
+            "to_node": "M1",
+            "distance": 300,
+            "speed_limit": 100,
+            "gradient": 0,
+            "bidirectional": true
+        },
+        {
+            "from_node": "SW1",
+            "to_node": "M2",
+            "distance": 500,
+            "speed_limit": 100,
+            "gradient": 0,
+            "bidirectional": true
+        },
+        {
+            "from_node": "E1",
+            "to_node": "M1",
+            "distance": 600,
+            "speed_limit": 120,
+            "gradient": -0.08,
+            "bidirectional": true
+        },
+        {
+            "from_node": "E2",
+            "to_node": "M2",
+            "distance": 600,
+            "speed_limit": 120,
+            "gradient": -0.05,
+            "bidirectional": true
+        }
+    ]
+}

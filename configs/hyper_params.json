@@ -1,0 +1,28 @@
+{
+    "params_id": "hyper_001",
+    "description": "调度系统超参数配置",
+    "default_priority": 50,
+    "travel_time_precision": 2,
+    "speed_level_thresholds": {
+        "low": 100,
+        "medium": 200,
+        "high": 300
+    },
+    "big_m_value": 10000,
+    "gradient_factor": 0.1,
+    "switch_pass_time": 1,
+    "loading_time": 5,
+    "unloading_time": 5,
+    "electric_energy_threshold": 20,
+    "diesel_fuel_threshold": 50,
+    "energy_consumption_rate": {
+        "electric": 0.5,
+        "diesel": 2.0
+    },
+    "max_solve_time": 300,
+    "seed": 42,
+    "max_iterations": 1000,
+    "population_size": 50,
+    "mutation_rate": 0.1,
+    "crossover_rate": 0.8
+}

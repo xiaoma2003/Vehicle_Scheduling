@@ -1,0 +1,39 @@
+# 车辆调度AI算法评测系统 - Python依赖
+
+# 核心调度求解器
+ortools>=9.8.0
+
+# Web框架
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# 数据处理
+numpy>=1.26.0
+pandas>=2.1.0
+
+# 可视化
+matplotlib>=3.8.0
+plotly>=5.18.0
+
+# 数据库
+# SQLite是Python内置模块，无需额外安装
+
+# 工具库
+python-dateutil>=2.8.0
+tqdm>=4.66.0
+
+# 候选策略可能需要的库（根据选型安装）
+# 遗传算法
+# deap>=1.4.0
+
+# 模拟退火
+# scipy>=1.11.0
+
+# 强化学习（可选）
+# gymnasium>=0.29.0
+# stable-baselines3>=2.2.0
+
+# 开发工具
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.1.0

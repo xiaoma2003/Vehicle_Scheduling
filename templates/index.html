@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车辆调度AI算法评测系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>车辆调度AI算法评测系统</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/config/map">地图配置</a>
+                <a href="/config/tasks">任务配置</a>
+                <a href="/config/locomotives">机车配置</a>
+                <a href="/config/hyper">超参数</a>
+                <a href="/scheduling">调度控制</a>
+                <a href="/comparison">策略对比</a>
+                <a href="/query">数据查询</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="overview">
+                <h2>系统概述</h2>
+                <p>本系统为"车辆调度AI算法评测系统"，核心功能是基于前台调度员通过界面操作自动生成的JSON配置文件，以基准策略（Dijkstra + CP-SAT）为参考锚点，对多种AI算法策略进行系统性对比评测。</p>
+            </section>
+
+            <section class="status">
+                <h2>系统状态</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="label">可用机车</span>
+                        <span class="value" id="available_locos">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">待执行任务</span>
+                        <span class="value" id="pending_tasks">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">紧急任务</span>
+                        <span class="value" id="emergency_tasks">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">历史调度</span>
+                        <span class="value" id="history_count">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="quick-actions">
+                <h2>快速操作</h2>
+                <div class="action-buttons">
+                    <button onclick="loadConfigs()">加载配置</button>
+                    <button onclick="executeScheduling()">执行调度</button>
+                    <button onclick="compareStrategies()">策略对比</button>
+                    <button onclick="addEmergencyTask()">添加紧急任务</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>车辆调度AI算法评测系统 v1.0</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
