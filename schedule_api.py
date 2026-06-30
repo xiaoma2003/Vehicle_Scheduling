@@ -15,18 +15,10 @@ class ScheduleAPI:
     """调度系统API接口类 - 封装16个方法供前端调用"""
 
     def __init__(self, config_dir: str = 'configs',
-                 db_host: str = 'localhost', db_port: int = 3306,
-                 db_user: str = 'root', db_password: str = '123456',
-                 db_name: str = 'vehicle_scheduling'):
+                 db_path: str = 'database/schedule_history.db'):
         self.config_dir = config_dir
         self.config_loader = ConfigLoader()
-        self.db = ScheduleDatabase(
-            host=db_host,
-            port=db_port,
-            user=db_user,
-            password=db_password,
-            database=db_name
-        )
+        self.db = ScheduleDatabase(db_path)
         self.current_batch_id = None
 
     # ==================== 配置管理接口 ====================

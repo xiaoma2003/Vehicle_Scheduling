@@ -392,8 +392,8 @@ if __name__ == '__main__':
         api = ScheduleAPI()
         print("✓ 数据库连接成功")
     except Exception as e:
-        print(f"✗ 数据库连接失败: {e}")
-        print("请确保MySQL服务已启动，配置正确")
+        print(f"✗ 数据库初始化失败: {e}")
+        print("请检查数据库文件路径是否正确")
         exit(1)
 
     print("\n启动Flask服务...")
