@@ -5,6 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>调度控制 - 车辆调度AI算法评测系统</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .map-container {
+            position: relative;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #f5f5f5;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        #mapCanvas {
+            display: block;
+            background: #fafafa;
+        }
+        .map-legend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.95);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+        .map-legend h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid #333;
+        }
+        .legend-color.station { background: #4CAF50; }
+        .legend-color.energy { background: #FF9800; }
+        .legend-color.material { background: #2196F3; }
+        .legend-color.switch { background: #9C27B0; }
+        .legend-color.locomotive { background: #f44336; }
+        .info-panel {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .info-card {
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 6px;
+            flex: 1;
+            min-width: 120px;
+        }
+        .info-card .label {
+            font-size: 12px;
+            color: #666;
+        }
+        .info-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .vehicle-list {
+            margin-top: 15px;
+        }
+        .vehicle-item {
+            display: inline-block;
+            background: #e3f2fd;
+            padding: 6px 12px;
+            margin: 4px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .vehicle-item.active {
+            background: #c8e6c9;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -26,23 +107,89 @@
             <section>
                 <h2>调度控制</h2>
 
+                <div class="info-panel">
+                    <div class="info-card">
+                        <div class="label">当前时间</div>
+                        <div class="value" id="current_time">0 min</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">节点数量</div>
+                        <div class="value" id="node_count">0</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">机车数量</div>
+                        <div class="value" id="loco_count">0</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">任务数量</div>
+                        <div class="value" id="task_count">0</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label">状态</div>
+                        <div class="value" style="font-size:16px;" id="status_text">待调度</div>
+                    </div>
+                </div>
+
                 <div class="control-panel">
                     <h3>策略选择</h3>
                     <select id="strategy">
-                        <option value="baseline">基准策略 (Dijkstra + CP-SAT)</option>
-                    </select>
+                    <option value="baseline">基准策略 (Dijkstra + CP-SAT)</option>
+                </select>
 
                     <h3>模式选择</h3>
                     <label><input type="radio" name="mode" value="single" checked> 单策略模式</label>
                     <label><input type="radio" name="mode" value="compare"> 多策略对比模式</label>
 
-                    <button onclick="executeScheduling()">执行调度</button>
+                    <h3>播放速度</h3>
+                    <select id="speed">
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="5" selected>5x</option>
+                    <option value="10">10x</option>
+                    <option value="50">50x</option>
+                </select>
+
+                    <button onclick="executeScheduling()" id="exec_btn">执行调度</button>
+                    <button onclick="pauseAnimation()" id="pause_btn" disabled>暂停</button>
+                    <button onclick="resetAnimation()" id="reset_btn">重置</button>
                 </div>
 
                 <div class="emergency-panel">
                     <h3>紧急任务</h3>
                     <button onclick="addEmergencyTask()">添加紧急任务</button>
                     <button onclick="confirmEmergency()">确认紧急任务完成</button>
+                </div>
+
+                <div class="map-container">
+                    <canvas id="mapCanvas" width="900" height="600"></canvas>
+                    <div class="map-legend">
+                        <h4>图例</h4>
+                        <div class="legend-item">
+                            <div class="legend-color station"></div>
+                            <span>车站</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color energy"></div>
+                            <span>能源补给站</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color material"></div>
+                            <span>物料站</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color switch"></div>
+                            <span>道岔</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color locomotive"></div>
+                            <span>机车</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vehicle-list" id="vehicle_list">
+                    <h3>机车状态</h3>
+                    <div id="vehicle_status">等待加载...</div>
                 </div>
 
                 <div id="result_display">
@@ -58,12 +205,196 @@
     </div>
 
     <script>
+        let mapConfig = null;
+        let locomotives = [];
+        let tasks = [];
+        let scheduleResult = null;
+        let animationId = null;
+        let isPaused = false;
+        let currentTime = 0;
+        let animationStartTime = 0;
+        let playbackSpeed = 5;
+        let maxMakespan = 0;
+        let vehiclePositions = [];
+
+        const canvas = document.getElementById('mapCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const NODE_COLORS = {
+            'station': '#4CAF50',
+            'energy_station': '#FF9800',
+            'material_station': '#2196F3',
+            'switch': '#9C27B0'
+        };
+
+        const NODE_NAMES = {
+            'station': '车站',
+            'energy_station': '能源补给站',
+            'material_station': '物料站',
+            'switch': '道岔'
+        };
+
+        async function initMap() {
+            const [mapRes, locoRes, taskRes] = await Promise.all([
+                fetch('/api/configs/map').then(r => r.json()),
+                fetch('/api/configs/locomotives').then(r => r.json()),
+                fetch('/api/configs/tasks').then(r => r.json())
+            ]);
+
+            mapConfig = mapRes;
+            locomotives = locoRes.locomotives;
+            tasks = taskRes.tasks;
+
+            document.getElementById('node_count').textContent = mapConfig.nodes.length;
+            document.getElementById('loco_count').textContent = locomotives.length;
+            document.getElementById('task_count').textContent = tasks.length;
+
+            initVehiclePositions();
+            updateVehicleStatus();
+            drawMap();
+        }
+
+        function initVehiclePositions() {
+            vehiclePositions = locomotives.map(loco => {
+                const node = mapConfig.nodes.find(n => n.node_id === loco.initial_node);
+                return {
+                    loco_id: loco.loco_id,
+                    x: node ? node.x : 0,
+                    y: node ? node.y : 0,
+                    target_x: node ? node.x : 0,
+                    target_y: node ? node.y : 0,
+                    current_node: loco.initial_node,
+                    status: 'idle',
+                    color: getVehicleColor(loco.loco_id),
+                    task_id: null
+                };
+            });
+        }
+
+        function getVehicleColor(locoId) {
+            const colors = ['#f44336', '#E91E63', '#9C27B0', '#673AB7',
+                          '#3F51B5', '#2196F3', '#009688', '#FF5722'];
+            const index = parseInt(locoId.replace(/[^0-9]/g, '')) % colors.length;
+            return colors[index] || '#f44336';
+        }
+
+        function drawMap() {
+            if (!mapConfig) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const padding = 60;
+            const nodes = mapConfig.nodes;
+            const edges = mapConfig.edges;
+
+            const minX = Math.min(...nodes.map(n => n.x));
+            const maxX = Math.max(...nodes.map(n => n.x));
+            const minY = Math.min(...nodes.map(n => n.y));
+            const maxY = Math.max(...nodes.map(n => n.y));
+
+            const scaleX = (canvas.width - 2 * padding) / (maxX - minX || 1);
+            const scaleY = (canvas.height - 2 * padding) / (maxY - minY || 1);
+            const scale = Math.min(scaleX, scaleY);
+
+            const offsetX = (canvas.width - (maxX - minX) * scale) / 2;
+            const offsetY = (canvas.height - (maxY - minY) * scale) / 2;
+
+            const nodePositions = {};
+            nodes.forEach(node => {
+                nodePositions[node.node_id] = {
+                    x: offsetX + (node.x - minX) * scale,
+                    y: offsetY + (node.y - minY) * scale
+                };
+            });
+
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([]);
+            edges.forEach(edge => {
+                const from = nodePositions[edge.from_node];
+                const to = nodePositions[edge.to_node];
+                if (from && to) {
+                    ctx.beginPath();
+                    ctx.moveTo(from.x, from.y);
+                    ctx.lineTo(to.x, to.y);
+                    ctx.stroke();
+
+                    const midX = (from.x + to.x) / 2;
+                    const midY = (from.y + to.y) / 2;
+                    ctx.fillStyle = '#666';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(edge.distance + 'm', midX, midY - 5);
+                }
+            });
+
+            nodes.forEach(node => {
+                const pos = nodePositions[node.node_id];
+                const color = NODE_COLORS[node.node_type] || '#666';
+
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 12, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(node.node_name, pos.x, pos.y + 25);
+            });
+
+            vehiclePositions.forEach(vehicle => {
+                const pos = nodePositions[vehicle.current_node];
+                if (pos) {
+                    const screenX = offsetX + (vehicle.x - minX) * scale;
+                    const screenY = offsetY + (vehicle.y - minY) * scale;
+
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, 10, 0, Math.PI * 2);
+                    ctx.fillStyle = vehicle.color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 9px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(vehicle.loco_id, screenX, screenY + 3);
+                }
+            });
+        }
+
+        function updateVehicleStatus() {
+            const container = document.getElementById('vehicle_status');
+            let html = '';
+            vehiclePositions.forEach(v => {
+                const statusText = {
+                    'idle': '空闲',
+                    'moving': '行驶中',
+                    'loading': '装货',
+                    'unloading': '卸货'
+                }[v.status] || v.status;
+                html += `<div class="vehicle-item ${v.status !== 'idle' ? 'active' : ''}">
+                    ${v.loco_id} - ${statusText}
+                    ${v.task_id ? '(' + v.task_id + ')' : ''}
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
         async function executeScheduling() {
             const strategy = document.getElementById('strategy').value;
             const mode = document.querySelector('input[name="mode"]:checked').value;
             const compareMode = mode === 'compare';
+            playbackSpeed = parseInt(document.getElementById('speed').value);
 
             const resultDiv = document.getElementById('result_content');
+            document.getElementById('status_text').textContent = '调度中...';
+            document.getElementById('exec_btn').disabled = true;
             resultDiv.innerHTML = '正在执行调度，请稍候...';
 
             try {
@@ -78,17 +409,204 @@
                 const data = await response.json();
 
                 if (data.status === 'success') {
+                    scheduleResult = data;
                     resultDiv.innerHTML = `
                         <p>调度成功!</p>
                         <p>批次ID: ${data.batch_id}</p>
-                        <p>对比模式: ${data.compare_mode ? '是' : '否'}</p>
+                        <p>Makespan: ${data.makespan || 'N/A'}</p>
                     `;
+                    document.getElementById('status_text').textContent = '运行中';
+                    document.getElementById('pause_btn').disabled = false;
+                    startAnimation();
                 } else {
                     resultDiv.innerHTML = `<p style="color: red">调度失败: ${data.message}</p>`;
+                    document.getElementById('status_text').textContent = '失败';
+                    document.getElementById('exec_btn').disabled = false;
                 }
             } catch (error) {
                 resultDiv.innerHTML = `<p style="color: red">请求失败: ${error.message}</p>`;
+                document.getElementById('status_text').textContent = '失败';
+                document.getElementById('exec_btn').disabled = false;
             }
+        }
+
+        function startAnimation() {
+            currentTime = 0;
+            isPaused = false;
+            animationStartTime = performance.now();
+
+            const movements = generateVehicleMovements();
+            maxMakespan = calculateMaxMakespan(movements);
+
+            function animate(timestamp) {
+                if (isPaused) {
+                    animationId = requestAnimationFrame(animate);
+                    return;
+                }
+
+                const elapsed = (timestamp - animationStartTime) / 1000 * playbackSpeed;
+                currentTime = Math.min(elapsed, maxMakespan);
+
+                document.getElementById('current_time').textContent = currentTime.toFixed(1) + ' min';
+
+                updateVehiclePositions(currentTime, movements);
+                drawMap();
+                updateVehicleStatus();
+
+                if (currentTime >= maxMakespan) {
+                    document.getElementById('status_text').textContent = '完成';
+                    document.getElementById('exec_btn').disabled = false;
+                    document.getElementById('pause_btn').disabled = true;
+                    return;
+                }
+
+                animationId = requestAnimationFrame(animate);
+            }
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function generateVehicleMovements() {
+            const movements = {};
+            locomotives.forEach(loco => {
+                movements[loco.loco_id] = [];
+            });
+
+            const allTasks = tasks || [];
+            let time = 0;
+            const availableLocos = [...locomotives];
+
+            allTasks.forEach((task, idx) => {
+                const loco = availableLocos[idx % availableLocos.length];
+                if (!loco) return;
+
+                const startNode = mapConfig.nodes.find(n => n.node_id === task.start_node);
+                const endNode = mapConfig.nodes.find(n => n.node_id === task.end_node);
+                if (!startNode || !endNode) return;
+
+                const distance = Math.sqrt(
+                    Math.pow(endNode.x - startNode.x, 2) +
+                    Math.pow(endNode.y - startNode.y, 2)
+                );
+                const speed = loco.max_speed || 60;
+                const travelTime = distance / speed;
+
+                const startTime = idx * 5;
+                const endTime = startTime + travelTime;
+
+                movements[loco.loco_id].push({
+                    type: 'move',
+                    task_id: task.task_id,
+                    start_time: startTime,
+                    end_time: endTime,
+                    from_node: task.start_node,
+                    to_node: task.end_node,
+                    from_x: startNode.x,
+                    from_y: startNode.y,
+                    to_x: endNode.x,
+                    to_y: endNode.y
+                });
+
+                movements[loco.loco_id].push({
+                    type: 'unload',
+                    task_id: task.task_id,
+                    start_time: endTime,
+                    end_time: endTime + 2,
+                    node: task.end_node
+                });
+            });
+
+            return movements;
+        }
+
+        function calculateMaxMakespan(movements) {
+            let max = 0;
+            Object.values(movements).forEach(moves => {
+                moves.forEach(m => {
+                    if (m.end_time > max) max = m.end_time;
+                });
+            });
+            return max || 100;
+        }
+
+        function updateVehiclePositions(time, movements) {
+            vehiclePositions.forEach(vehicle => {
+                const locoMoves = movements[vehicle.loco_id] || [];
+                let currentMove = null;
+
+                for (const move of locoMoves) {
+                    if (time >= move.start_time && time < move.end_time) {
+                        currentMove = move;
+                        break;
+                    }
+                }
+
+                if (currentMove) {
+                    const progress = (time - currentMove.start_time) /
+                                   (currentMove.end_time - currentMove.start_time);
+
+                    if (currentMove.type === 'move') {
+                        vehicle.x = currentMove.from_x + (currentMove.to_x - currentMove.from_x) * progress;
+                        vehicle.y = currentMove.from_y + (currentMove.to_y - currentMove.from_y) * progress;
+                        vehicle.status = 'moving';
+                        vehicle.task_id = currentMove.task_id;
+                    } else if (currentMove.type === 'unload') {
+                        const endNode = mapConfig.nodes.find(n => n.node_id === currentMove.node);
+                        if (endNode) {
+                            vehicle.x = endNode.x;
+                            vehicle.y = endNode.y;
+                        }
+                        vehicle.status = 'unloading';
+                        vehicle.task_id = currentMove.task_id;
+                        vehicle.current_node = currentMove.node;
+                    }
+                } else {
+                    let lastMove = null;
+                    for (const move of locoMoves) {
+                        if (time >= move.end_time) {
+                            lastMove = move;
+                        }
+                    }
+                    if (lastMove) {
+                        const endNode = mapConfig.nodes.find(n => n.node_id ===
+                            (lastMove.to_node || lastMove.node));
+                        if (endNode) {
+                            vehicle.x = endNode.x;
+                            vehicle.y = endNode.y;
+                            vehicle.current_node = endNode.node_id;
+                        }
+                    }
+                    vehicle.status = 'idle';
+                    vehicle.task_id = null;
+                }
+            });
+        }
+
+        function pauseAnimation() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('pause_btn');
+            btn.textContent = isPaused ? '继续' : '暂停';
+
+            if (!isPaused) {
+                animationStartTime = performance.now() - currentTime * 1000 / playbackSpeed;
+            }
+        }
+
+        function resetAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            currentTime = 0;
+            isPaused = false;
+            document.getElementById('current_time').textContent = '0 min';
+            document.getElementById('status_text').textContent = '待调度';
+            document.getElementById('exec_btn').disabled = false;
+            document.getElementById('pause_btn').disabled = true;
+            document.getElementById('pause_btn').textContent = '暂停';
+            initVehiclePositions();
+            drawMap();
+            updateVehicleStatus();
         }
 
         function addEmergencyTask() {
@@ -114,6 +632,8 @@
                 .then(data => alert(data.message));
             }
         }
+
+        initMap();
     </script>
 </body>
 </html>
