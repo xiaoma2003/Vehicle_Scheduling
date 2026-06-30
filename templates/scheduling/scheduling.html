@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调度控制 - 车辆调度AI算法评测系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>车辆调度AI算法评测系统</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/config/map">地图配置</a>
+                <a href="/config/tasks">任务配置</a>
+                <a href="/config/locomotives">机车配置</a>
+                <a href="/config/hyper">超参数</a>
+                <a href="/scheduling">调度控制</a>
+                <a href="/comparison">策略对比</a>
+                <a href="/query">数据查询</a>
+            </nav>
+        </header>
+
+        <main>
+            <section>
+                <h2>调度控制</h2>
+
+                <div class="control-panel">
+                    <h3>策略选择</h3>
+                    <select id="strategy">
+                        <option value="baseline">基准策略 (Dijkstra + CP-SAT)</option>
+                    </select>
+
+                    <h3>模式选择</h3>
+                    <label><input type="radio" name="mode" value="single" checked> 单策略模式</label>
+                    <label><input type="radio" name="mode" value="compare"> 多策略对比模式</label>
+
+                    <button onclick="executeScheduling()">执行调度</button>
+                </div>
+
+                <div class="emergency-panel">
+                    <h3>紧急任务</h3>
+                    <button onclick="addEmergencyTask()">添加紧急任务</button>
+                    <button onclick="confirmEmergency()">确认紧急任务完成</button>
+                </div>
+
+                <div id="result_display">
+                    <h3>调度结果</h3>
+                    <div id="result_content">等待调度...</div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>车辆调度AI算法评测系统 v1.0</p>
+        </footer>
+    </div>
+
+    <script>
+        async function executeScheduling() {
+            const strategy = document.getElementById('strategy').value;
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const compareMode = mode === 'compare';
+
+            const resultDiv = document.getElementById('result_content');
+            resultDiv.innerHTML = '正在执行调度，请稍候...';
+
+            try {
+                const response = await fetch('/api/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        strategies: [strategy],
+                        compare_mode: compareMode
+                    })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    resultDiv.innerHTML = `
+                        <p>调度成功!</p>
+                        <p>批次ID: ${data.batch_id}</p>
+                        <p>对比模式: ${data.compare_mode ? '是' : '否'}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red">调度失败: ${data.message}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red">请求失败: ${error.message}</p>`;
+            }
+        }
+
+        function addEmergencyTask() {
+            const taskId = prompt('请输入紧急任务ID:');
+            if (taskId) {
+                fetch('/api/emergency', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({task_data: {task_id: taskId}})
+                }).then(response => response.json())
+                .then(data => alert(data.message));
+            }
+        }
+
+        function confirmEmergency() {
+            const taskId = prompt('请输入要确认的紧急任务ID:');
+            if (taskId) {
+                fetch('/api/emergency/confirm', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({task_id: taskId})
+                }).then(response => response.json())
+                .then(data => alert(data.message));
+            }
+        }
+    </script>
+</body>
+</html>

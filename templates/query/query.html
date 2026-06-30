@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据查询 - 车辆调度AI算法评测系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>车辆调度AI算法评测系统</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/config/map">地图配置</a>
+                <a href="/config/tasks">任务配置</a>
+                <a href="/config/locomotives">机车配置</a>
+                <a href="/config/hyper">超参数</a>
+                <a href="/scheduling">调度控制</a>
+                <a href="/comparison">策略对比</a>
+                <a href="/query">数据查询</a>
+            </nav>
+        </header>
+
+        <main>
+            <section>
+                <h2>数据查询</h2>
+
+                <div class="query-tabs">
+                    <button onclick="switchTab('results')">调度结果</button>
+                    <button onclick="switchTab('logs')">系统日志</button>
+                    <button onclick="switchTab('statistics')">统计信息</button>
+                </div>
+
+                <div id="tab_content">
+                    <div id="results_tab">
+                        <h3>调度结果查询</h3>
+                        <input type="text" id="batch_id_input" placeholder="批次ID">
+                        <input type="text" id="strategy_input" placeholder="策略名称">
+                        <button onclick="queryResults()">查询</button>
+                        <div id="results_table">加载中...</div>
+                    </div>
+
+                    <div id="logs_tab" style="display: none;">
+                        <h3>系统日志查询</h3>
+                        <input type="text" id="log_batch_id" placeholder="批次ID">
+                        <select id="log_type">
+                            <option value="">所有类型</option>
+                            <option value="SCHEDULING">调度</option>
+                            <option value="EMERGENCY">紧急任务</option>
+                            <option value="SYSTEM">系统</option>
+                        </select>
+                        <button onclick="queryLogs()">查询</button>
+                        <div id="logs_table">加载中...</div>
+                    </div>
+
+                    <div id="statistics_tab" style="display: none;">
+                        <h3>统计信息</h3>
+                        <div id="statistics_content">加载中...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>车辆调度AI算法评测系统 v1.0</p>
+        </footer>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('#tab_content > div').forEach(div => {
+                div.style.display = 'none';
+            });
+            document.getElementById(tabName + '_tab').style.display = 'block';
+        }
+
+        async function queryResults() {
+            const batchId = document.getElementById('batch_id_input').value;
+            const strategy = document.getElementById('strategy_input').value;
+
+            let url = '/api/query/results?';
+            if (batchId) url += `batch_id=${batchId}&`;
+            if (strategy) url += `strategy_name=${strategy}&`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+            renderResultsTable(data.data, 'results_table');
+        }
+
+        async function queryLogs() {
+            const batchId = document.getElementById('log_batch_id').value;
+            const logType = document.getElementById('log_type').value;
+
+            let url = '/api/query/logs?';
+            if (batchId) url += `batch_id=${batchId}&`;
+            if (logType) url += `log_type=${logType}&`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+            renderLogsTable(data.data, 'logs_table');
+        }
+
+        async function loadStatistics() {
+            const response = await fetch('/api/statistics');
+            const data = await response.json();
+            renderStatistics(data.data);
+        }
+
+        function renderResultsTable(results, containerId) {
+            const container = document.getElementById(containerId);
+            if (!results || results.length === 0) {
+                container.innerHTML = '<p>暂无数据</p>';
+                return;
+            }
+
+            let html = '<table><tr><th>ID</th><th>批次ID</th><th>策略</th><th>状态</th><th>Makespan</th><th>创建时间</th></tr>';
+            results.forEach(result => {
+                html += `<tr>
+                    <td>${result.id}</td>
+                    <td>${result.batch_id}</td>
+                    <td>${result.strategy_name}</td>
+                    <td>${result.solve_status}</td>
+                    <td>${result.makespan}</td>
+                    <td>${result.created_at}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        function renderLogsTable(logs, containerId) {
+            const container = document.getElementById(containerId);
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '<p>暂无数据</p>';
+                return;
+            }
+
+            let html = '<table><tr><th>ID</th><th>批次ID</th><th>级别</th><th>类型</th><th>消息</th><th>时间</th></tr>';
+            logs.forEach(log => {
+                html += `<tr>
+                    <td>${log.id}</td>
+                    <td>${log.batch_id || '-'}</td>
+                    <td>${log.log_level}</td>
+                    <td>${log.log_type}</td>
+                    <td>${log.message}</td>
+                    <td>${log.created_at}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        function renderStatistics(stats) {
+            const container = document.getElementById('statistics_content');
+            let html = '<h4>调度结果统计</h4>';
+            html += `<p>总记录数: ${stats.total_results}</p>`;
+
+            html += '<h4>策略统计</h4>';
+            if (stats.strategy_stats && stats.strategy_stats.length > 0) {
+                html += '<table><tr><th>策略</th><th>执行次数</th><th>平均工期</th></tr>';
+                stats.strategy_stats.forEach(s => {
+                    html += `<tr><td>${s.strategy_name}</td><td>${s.count}</td><td>${s.avg_makespan}</td></tr>`;
+                });
+                html += '</table>';
+            } else {
+                html += '<p>暂无策略统计数据</p>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        switchTab('results');
+        queryResults();
+    </script>
+</body>
+</html>
